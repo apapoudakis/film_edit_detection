@@ -44,6 +44,16 @@ def get_frames(video, width=64, height=64):
     return video
 
 
+def timecode_to_secs(timecode):
+    """
+    :param timecode: HH:MM:SS:FF
+    :return:
+    """
+    splitted_timecode = timecode.split(":")
+    time = int(splitted_timecode[0]) * 3600 + int(splitted_timecode[1]) * 60 + int(splitted_timecode[2])
+    return time
+
+
 def timecode_to_frame(video, timecode):
     """
     Converts timecode to frame index
@@ -53,9 +63,8 @@ def timecode_to_frame(video, timecode):
     """
     cap = cv2.VideoCapture(video)
     fps = cap.get(cv2.CAP_PROP_FPS)
-
+    cut_time = timecode_to_secs(timecode)
     splitted_timecode = timecode.split(":")
-    cut_time = int(splitted_timecode[0]) * 3600 + int(splitted_timecode[1]) * 60 + int(splitted_timecode[2])
     transition_frame = int(fps * cut_time) + int(splitted_timecode[3])
 
     return transition_frame, cut_time
