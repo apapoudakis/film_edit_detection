@@ -68,3 +68,18 @@ def timecode_to_frame(video, timecode):
     transition_frame = int(fps * cut_time) + int(splitted_timecode[3])
 
     return transition_frame, cut_time
+
+
+def frames_composition(img1, img2, alpha):
+    """
+    I(x) = alpha *img1(x) + (1.0-alpha)*img2
+    as defined by https://arxiv.org/abs/1705.03281
+
+    :param img1
+    :param img2
+    :param alpha
+    """
+
+    beta = 1.0 - alpha
+    comp_img = cv2.addWeighted(img1, alpha, img2, beta, 0.0)
+    return comp_img
