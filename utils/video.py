@@ -6,6 +6,7 @@ import numpy as np
 import ffmpeg
 
 
+
 def audio_check(video, save_path=None):
     """
     Checks if a video contains audio data
@@ -83,3 +84,21 @@ def frames_composition(img1, img2, alpha):
     beta = 1.0 - alpha
     comp_img = cv2.addWeighted(img1, alpha, img2, beta, 0.0)
     return comp_img
+
+
+def array_to_video(frames, fps, output_path):
+    """
+    Save numpy array as video file
+
+    :param frames:
+    :param fps:
+    :param output_path:
+    :return:
+    """
+
+    out = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (frames.shape[2], frames.shape[1]), True)
+    for i in range(frames.shape[0]):
+        out.write(cv2.cvtColor(frames[i, :, :, :], cv2.COLOR_BGR2RGB))
+    out.release()
+
+
