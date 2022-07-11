@@ -6,7 +6,6 @@ import numpy as np
 import ffmpeg
 
 
-
 def audio_check(video, save_path=None):
     """
     Checks if a video contains audio data
@@ -26,22 +25,34 @@ def audio_check(video, save_path=None):
     return True
 
 
+# def get_frames(video, width=64, height=64):
+#     """
+#     Video to Numpy Array
+#     (https://github.com/kkroening/ffmpeg-python/blob/master/examples/README.md#convert-video-to-numpy-array)
+#
+#     :param video:
+#     :param width:
+#     :param height:
+#     """
+#
+#     out, _ = (
+#         ffmpeg.input(video).output('pipe:', format='rawvideo', pix_fmt='rgb24',
+#                                    s='{}x{}'.format(width, height)).run(capture_stdout=True,
+#                                                                         capture_stderr=True))
+#     video = np.frombuffer(out, np.uint8).reshape([-1, height, width, 3])
+#
+#     return video
+
+
 def get_frames(video, width=64, height=64):
-    """
-    Video to Numpy Array
-    (https://github.com/kkroening/ffmpeg-python/blob/master/examples/README.md#convert-video-to-numpy-array)
-
-    :param video:
-    :param width:
-    :param height:
-    """
-
-    out, _ = (
-        ffmpeg.input(video).output('pipe:', format='rawvideo', pix_fmt='rgb24',
-                                   s='{}x{}'.format(width, height)).run(capture_stdout=True,
-                                                                        capture_stderr=True))
-    video = np.frombuffer(out, np.uint8).reshape([-1, height, width, 3])
-
+    frames = []
+    cap = cv2.VideoCapture(video)
+    ret = True
+    while ret:
+        ret, img = cap.read()
+        if ret:
+            frames.append(cv2.resize(img, (height, width)))
+    video = np.stack(frames, axis=0)  # dimensions (T, H, W, C)
     return video
 
 
@@ -100,5 +111,3 @@ def array_to_video(frames, fps, output_path):
     for i in range(frames.shape[0]):
         out.write(cv2.cvtColor(frames[i, :, :, :], cv2.COLOR_BGR2RGB))
     out.release()
-
-
