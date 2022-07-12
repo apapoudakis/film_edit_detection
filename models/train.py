@@ -3,11 +3,12 @@ import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch.nn as nn
+from evaluation.metrics import accuracy
 
 
 def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
     criterion = nn.CrossEntropyLoss()
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
@@ -15,11 +16,15 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
 
     train_losses = []
     test_losses = []
+    train_accuracy = []
+    test_accuracy = []
 
     for epoch in range(num_epochs):
         model.train()
         train_epoch_losses = []
         test_epoch_losses = []
+        train_epoch_accuracy = []
+        test_epoch_accuracy = []
         for it, data in enumerate(tqdm(train_loader)):
             x, labels = data
             x = x.to(device)
@@ -35,7 +40,7 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
             optimizer.step()
 
             train_epoch_losses.append(loss.item())
-
+            train_epoch_accuracy.append(accuracy(outputs, labels))
         with torch.no_grad():
             for test_it, data in enumerate(tqdm(test_loader)):
                 test_x, test_labels = data
@@ -45,11 +50,15 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
                 test_outputs = model(test_x)
                 test_loss = criterion(test_outputs, test_labels)
                 test_epoch_losses.append(test_loss.item())
+                test_epoch_accuracy.append(accuracy(test_outputs, test_labels))
 
         train_losses.append(sum(train_epoch_losses)/len(train_epoch_losses))
         test_losses.append(sum(test_epoch_losses)/len(test_epoch_losses))
+        train_accuracy.append(sum(train_epoch_accuracy)/len(train_epoch_accuracy))
+        test_accuracy.append(sum(test_epoch_accuracy)/len(test_epoch_accuracy))
 
         print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
+        print(f"Train Accuracy: {train_accuracy[epoch]}  Test Accuracy: {test_accuracy[epoch]}")
 
     plt.xlabel("Epoch")
     plt.ylabel("Loss")

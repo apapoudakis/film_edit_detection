@@ -12,6 +12,7 @@ from models import deep_SBD, train
 import torch.nn as nn
 import torch
 from tqdm import tqdm
+from evaluation.metrics import accuracy
 
 
 class VideoDataset(Dataset):
@@ -98,48 +99,51 @@ optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 criterion = nn.CrossEntropyLoss()
 train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
 test_loader = DataLoader(test_dataset, batch_size=16, shuffle=True)
-model = model.to(device)
+# model = model.to(device)
 
 train_losses = []
 test_losses = []
 
-for epoch in range(10):
-    model.train()
-    train_epoch_losses = []
-    test_epoch_losses = []
-    for it, data in enumerate(tqdm(train_loader)):
-        x, labels = data
-        x = x.to(device)
-        labels = labels.to(device)
+train.train_loop(model, train_dataset, test_dataset, batch_size=8, num_epochs=10, device=device)
 
-        # zero the parameter gradients
-        optimizer.zero_grad()
 
-        # forward
-        outputs = model(x)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        train_epoch_losses.append(loss.item())
-
-    with torch.no_grad():
-        for test_it, data in enumerate(tqdm(test_loader)):
-            test_x, test_labels = data
-            test_x = test_x.to(device)
-            test_labels = test_labels.to(device)
-
-            test_outputs = model(test_x)
-            test_loss = criterion(test_outputs, test_labels)
-            test_epoch_losses.append(test_loss.item())
-
-    train_losses.append(sum(train_epoch_losses)/len(train_epoch_losses))
-    test_losses.append(sum(test_epoch_losses)/len(test_epoch_losses))
-
-    print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
-
-plt.xlabel("Epoch")
-plt.ylabel("Loss")
-plt.plot(train_losses)
-plt.plot(test_losses)
-plt.show()
+# for epoch in range(10):
+#     model.train()
+#     train_epoch_losses = []
+#     test_epoch_losses = []
+#     for it, data in enumerate(tqdm(train_loader)):
+#         x, labels = data
+#         x = x.to(device)
+#         labels = labels.to(device)
+#
+#         # zero the parameter gradients
+#         optimizer.zero_grad()
+#
+#         # forward
+#         outputs = model(x)
+#         loss = criterion(outputs, labels)
+#         loss.backward()
+#         optimizer.step()
+#         print("Accuracy:", accuracy(outputs, labels))
+#         train_epoch_losses.append(loss.item())
+#
+#     with torch.no_grad():
+#         for test_it, data in enumerate(tqdm(test_loader)):
+#             test_x, test_labels = data
+#             test_x = test_x.to(device)
+#             test_labels = test_labels.to(device)
+#
+#             test_outputs = model(test_x)
+#             test_loss = criterion(test_outputs, test_labels)
+#             test_epoch_losses.append(test_loss.item())
+#
+#     train_losses.append(sum(train_epoch_losses)/len(train_epoch_losses))
+#     test_losses.append(sum(test_epoch_losses)/len(test_epoch_losses))
+#
+#     print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
+#
+# plt.xlabel("Epoch")
+# plt.ylabel("Loss")
+# plt.plot(train_losses)
+# plt.plot(test_losses)
+# plt.show()
