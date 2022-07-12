@@ -39,9 +39,9 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
             loss = criterion(outputs, labels)
             loss.backward()
             optimizer.step()
-
             train_epoch_losses.append(loss.item())
-            num_correct_train = (outputs == labels).float().sum()
+            _, pred = torch.max(outputs.data, 1)
+            num_correct_train += (pred == labels).sum().item()
         with torch.no_grad():
             for test_it, data in enumerate(tqdm(test_loader)):
                 test_x, test_labels = data
@@ -51,7 +51,8 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
                 test_outputs = model(test_x)
                 test_loss = criterion(test_outputs, test_labels)
                 test_epoch_losses.append(test_loss.item())
-                num_correct_test = (test_outputs == test_labels).float().sum()
+                _, test_pred = torch.max(test_outputs.data, 1)
+                num_correct_test += (test_pred == test_labels).sum().item()
 
         train_losses.append(sum(train_epoch_losses)/len(train_epoch_losses))
         test_losses.append(sum(test_epoch_losses)/len(test_epoch_losses))
@@ -59,7 +60,7 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
         test_accuracy.append(num_correct_test/len(test_data))
 
         print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
-        print(f"Train Accuracy: {train_accuracy[epoch]}  Test Accuracy: {test_accuracy[epoch]}")
+        print(f"Train Accuracy: {num_correct_train/len(train_data)}  Test Accuracy: {num_correct_test/len(test_data)}")
 
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
