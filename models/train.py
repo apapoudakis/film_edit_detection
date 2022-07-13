@@ -62,6 +62,8 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
         print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
         print(f"Train Accuracy: {num_correct_train/len(train_data)}  Test Accuracy: {num_correct_test/len(test_data)}")
 
+    torch.save(model.state_dict(), "model.pt")
+
     plt.xlabel("Epoch")
     plt.ylabel("Loss")
     plt.plot(train_losses)
