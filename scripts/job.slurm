@@ -2,11 +2,20 @@
 
 #SBATCH --time=00:05:00
 #SBATCH -p gpu -C gpu2v100 --gres=gpu:1
-#SBATCH -o test.o%j
+#SBATCH -o /home/$USER/test.o%j
 
-module load cuda
-module swap intel gcc
-module load python/3.7.0
+# from gallina home to tmp folder
+rsync -az hpc3:/mnt/rds/redhen/gallina/home/axp1083/ /tmp/axp1083/
 
+cd /tmp/$USER/
+git clone https://github.com/apapoudakis/film_edit_detection.git
 
-cd $PFSDIR
+module load gcc/6.3.0
+export PYTHONPATH="${PYTHONPATH}:/tmp/axp1083/film_edit_detection"
+cd film_edit_detection
+pip3 install -r requirements.txt
+
+# from tmp folder to gallina home
+rsync -az /tmp/axp1083/ hpc3:/mnt/rds/redhen/gallina/home/axp1083/Data/
+
+rm -f -r /tmp/$USER/
