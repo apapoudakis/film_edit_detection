@@ -1,6 +1,9 @@
 import re
 from ast import literal_eval
 from metrics import precision, recall, f1_score
+from models import deep_SBD
+import torch
+from inference import run
 
 
 def check_overlap(begin1, end1, begin2, end2):
@@ -56,4 +59,21 @@ def evaluate_predictions(pred_file, gt_file):
     prec = precision(correct_preds, num_preds)
     rec = recall(correct_preds, total_gt_cuts)
     f1 = f1_score(prec, rec)
+    print("Stats: ")
     print(f"Precision: {prec}, Recall: {rec}, F1-score: {f1}")
+    print(f"Correct Predictions: {correct_preds} Total Predictions: {num_preds} GT Cuts: {total_gt_cuts}")
+    print("\n")
+
+    return prec, rec, f1
+
+
+if __name__ == "__main__":
+
+    model = deep_SBD.Model()
+    model.load_state_dict(torch.load("model.pt"))
+    model.eval()
+
+    run(model, "../../Data/RAI/ShotDetector/video_rai/21867.mp4", "out.txt", 16, 8)
+
+    evaluate_predictions("out.txt", "../../Data/RAI/ShotDetector/video_rai/21867_gt.txt")
+

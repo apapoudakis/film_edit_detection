@@ -13,38 +13,36 @@ def run(model, test_video, output_path, num_frames, overlap):
     :param overlap:
     :return:
     """
-    frames = get_frames(test_video)
-    video_segments = []
-    for i in range(0, frames.shape[0]-num_frames, overlap):
-        video_segments.append(torch.FloatTensor(frames[i:i+num_frames, :, :, :]))
 
-    inputs = torch.stack(video_segments, dim=0).reshape(-1, 3, 16, 64, 64)
-    outputs = model(inputs)
-    _, preds = torch.max(outputs.data, 1)
-    print(preds.shape)
+    constant = 1000
 
+    video = get_frames(test_video)
     results = []
-    print(preds)
-    print(preds.shape[0])
-    i = 0
-    while i < preds.shape[0]:
-        if preds[i] != 0:
-            label = preds[i]
-            begin = i
-            i += 1
-            while i < preds.shape[0] and preds[i] == preds[i-1]:
-                i += 1
-            end = i-1
-            results.append((begin * overlap + 1, end * overlap + 16 + 1, label.item()))
+    for j in range(0, len(video), constant):
+        frames = video[j:j+constant, :, :, :]
+        out = []
+        for i in range(0, frames.shape[0]-num_frames, overlap):
+            out.append(model(torch.FloatTensor(frames[i:i+num_frames, :, :, :]).reshape(1, 3, 16, 64, 64)))
 
-        else:
-            i += 1
+        outputs = torch.stack(out, dim=0).reshape(-1, 3)
+        _, preds = torch.max(outputs.data, 1)
+
+        i = 0
+        while i < preds.shape[0]:
+            if preds[i] != 0:
+                label = preds[i]
+                begin = i
+                i += 1
+                while i < preds.shape[0] and preds[i] == preds[i-1]:
+                    i += 1
+                end = i-1
+                results.append((begin * overlap + j + 1, end * overlap + 16 + j + 1, label.item()))
+
+            else:
+                i += 1
 
     with open(output_path, 'w') as fp:
         for item in results:
-            # write each item on a new line
             fp.write(str(item) + "\n")
 
     return results
-
-
