@@ -8,7 +8,7 @@ import pandas as pd
 
 def data_formatting(root_dir, annotation_path):
 
-    data_segments = ["tv7789", "tv2001", "tv2007", "tv2007d", "tv2008", "tv2009"]
+    data_segments = ["tv7789", "tv2001", "tv2007t", "tv2007d", "tv2008", "tv2009"]
     idx = 0
 
     df = pd.DataFrame(columns=["Video Idx", "Type of Cut"])
@@ -19,6 +19,7 @@ def data_formatting(root_dir, annotation_path):
         for r, dirs, files in os.walk(os.path.join(root_dir, ds)):
             if files:
                 frames = []
+                files = [x for x in files if x.endswith(".jpg")]
                 for f in sorted(files, key=lambda x: list(map(int, x.split(".")[0]))):
                     frames.append(asarray(Image.open(os.path.join(r, f)).resize((64, 64))))
                 video = np.stack(frames)
@@ -37,4 +38,4 @@ def data_formatting(root_dir, annotation_path):
     df.to_csv(os.path.join(annotation_path, "annotations.csv"), mode="a", index=False, header=False)
 
 
-data_formatting("../../Data/ClipShots/", "../../Data/ClipShots/EditedClipshots/")
+data_formatting("../../Data/deepSBD/", "../../Data/deepSBD/EditedDeepSBD/")
