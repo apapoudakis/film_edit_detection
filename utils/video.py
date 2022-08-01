@@ -11,7 +11,7 @@ def audio_check(video, save_path=None):
     Checks if a video contains audio data
     """
 
-    video_name = os.path.basename(video).split(".")[0]
+    video_name = os.path.basename(video).split(".mp4")[0]
     audio = moviepy.editor.VideoFileClip(video).audio
 
     if all(audio.max_volume(stereo=True) == 0):
@@ -20,7 +20,7 @@ def audio_check(video, save_path=None):
     if save_path is not None:
         if not os.path.exists(save_path):
             os.mkdir(save_path)
-        audio.write_audiofile(save_path + "/" + video_name + "_audio.wav")
+        audio.write_audiofile(save_path + "/" + video_name + ".wav")
 
     return True
 
@@ -82,21 +82,6 @@ def timecode_to_frame(video, timecode):
     return transition_frame, cut_time
 
 
-def frames_composition(img1, img2, alpha):
-    """
-    I(x) = alpha *img1(x) + (1.0-alpha)*img2
-    as defined by https://arxiv.org/abs/1705.03281
-
-    :param img1
-    :param img2
-    :param alpha
-    """
-
-    beta = 1.0 - alpha
-    comp_img = cv2.addWeighted(img1, alpha, img2, beta, 0.0)
-    return comp_img
-
-
 def array_to_video(frames, fps, output_path):
     """
     Save numpy array as video file
@@ -111,3 +96,17 @@ def array_to_video(frames, fps, output_path):
     for i in range(frames.shape[0]):
         out.write(cv2.cvtColor(frames[i, :, :, :], cv2.COLOR_BGR2RGB))
     out.release()
+
+
+def get_fps(video_path):
+
+    video = cv2.VideoCapture(video_path)
+    return video.get(cv2.CAP_PROP_FPS)
+
+
+def colour_histogram(img):
+    hist = cv2.calcHist([img], [0, 1, 2], None, [128, 128, 128],
+                        [0, 256, 0, 256, 0, 256])
+    hist = cv2.normalize(hist, hist).flatten()
+
+    return hist
