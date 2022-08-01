@@ -3,6 +3,8 @@ deepSBD model https://arxiv.org/abs/1705.03281
 Implementations is from https://github.com/Tangshitao/ClipShots_basline
 """
 import torch.nn as nn
+import cv2
+import utils.video
 
 
 class Model(nn.Module):
@@ -53,3 +55,15 @@ class Model(nn.Module):
         x = self.fc8(x)
 
         return x
+
+
+def post_processing(img1, img2, threshold):
+    hist1 = utils.video.colour_histogram(img1)
+    hist2 = utils.video.colour_histogram(img2)
+
+    distance = cv2.compareHist(hist1, hist2, cv2.HISTCMP_BHATTACHARYYA)
+    print(distance)
+    if distance < threshold:
+        return True
+
+    return False
