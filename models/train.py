@@ -3,12 +3,12 @@ import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch.nn as nn
-from evaluation.metrics import accuracy
 
 
 def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
 
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
@@ -33,7 +33,6 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
 
             # zero the parameter gradients
             optimizer.zero_grad()
-
             # forward
             outputs = model(x)
             loss = criterion(outputs, labels)
