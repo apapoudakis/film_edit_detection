@@ -5,7 +5,7 @@ from models import deep_SBD
 import torch
 
 
-def evaluate(model, test_set):
+def evaluate(model, test_set, threshold):
     """
     Evaluate model on benchmark datasets (e.g. BBC, RAI)
 
@@ -27,14 +27,14 @@ def evaluate(model, test_set):
 
     for v in videos:
         video_name = v.split(".")[0]
-        print(video_name)
+        print("Test Video:", video_name)
 
         # prediction
-        run(model, test_video=os.path.join(videos_path, v), output_path=os.path.join("../../Results/",
+        run(model, threshold, test_video=os.path.join(videos_path, v), output_path=os.path.join("../../Results/",
             test_set, video_name + ".txt"), num_frames=16, overlap=8)
 
         # evaluation
-        prec, rec, f1 = evaluate_predictions(os.path.join("../../Results/", test_set, video_name),
+        prec, rec, f1 = evaluate_predictions(os.path.join("../../Results/", test_set, video_name + ".txt"),
                                              os.path.join(videos_path, video_name + "_gt.txt"))
 
         # stats
@@ -50,7 +50,9 @@ def evaluate(model, test_set):
 
 if __name__ == "__main__":
     model = deep_SBD.Model()
-    model.load_state_dict(torch.load("model.pt"))
+    model.load_state_dict(torch.load("../data/syn_data/model_final2.pt"))
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model = model.to(device)
     model.eval()
 
-    evaluate(model, test_set="BBC")
+    evaluate(model, test_set="RAI", threshold=0.8)
