@@ -3,16 +3,18 @@ import torch
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import torch.nn as nn
+from utils import checkpoints
 
 
 def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
 
-    # optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-    optimizer = torch.optim.SGD(model.parameters(), lr=0.0001, momentum=0.9)
+    # optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
     criterion = nn.CrossEntropyLoss()
     train_loader = DataLoader(train_data, batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
     model = model.to(device)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
 
     train_losses = []
     test_losses = []
@@ -53,6 +55,7 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
                 _, test_pred = torch.max(test_outputs.data, 1)
                 num_correct_test += (test_pred == test_labels).sum().item()
 
+        scheduler.step()
         train_losses.append(sum(train_epoch_losses)/len(train_epoch_losses))
         test_losses.append(sum(test_epoch_losses)/len(test_epoch_losses))
         train_accuracy.append(num_correct_train/len(train_data))
@@ -60,6 +63,9 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
 
         print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
         print(f"Train Accuracy: {num_correct_train/len(train_data)}  Test Accuracy: {num_correct_test/len(test_data)}")
+
+        checkpoints.save(model_state_dict=model.state_dict(), optimizer_state_dict=optimizer.state_dict(),
+                         epoch=epoch, loss=loss.item(), out_path="deepSBD_checkpoint" + str(epoch) + ".pt")
 
     torch.save(model.state_dict(), "model.pt")
 
