@@ -1,7 +1,6 @@
 import os
 import numpy as np
-import matplotlib.pyplot as plt
-import torch
+import tqdm
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import pandas as pd
@@ -11,8 +10,6 @@ import torchvision.transforms
 from models import deep_SBD, train
 import torch.nn as nn
 import torch
-from tqdm import tqdm
-from evaluation.metrics import accuracy
 
 
 class VideoDataset(Dataset):
@@ -40,14 +37,17 @@ class VideoDataset(Dataset):
 
             counter = 0
             for i, row in self.annotation_data.iterrows():
-                frames = video.get_frames(os.path.join(data_path, row["Type of Cut"], str(i) + ".mp4"))
+                frames = video.get_frames(os.path.join(data_path, row["Type of Cut"], str(row["Idx"]) + ".mp4"), width,
+                                          height)
                 frames = torch.FloatTensor(frames)
                 frames = frames.reshape(-1, 3, height, width)
-                #
+
                 for j in range(frames.shape[0]):
                     frames[j, :, :, :] = t(frames[j, :, :, :])
 
-                torch.save(frames, os.path.join(data_path, "video_samples/", str(i) + ".pt"))
+                # torch.save(frames, os.path.join(data_path, "video_samples/", str(i) + ".pt"))
+                with open(os.path.join(data_path, "video_samples/", str(row["Idx"]) + ".pt"), 'wb') as f:
+                    pickle.dump(frames, f)
 
                 if row["Type of Cut"] == "No Transition":
                     temp_label = 0
@@ -71,20 +71,22 @@ class VideoDataset(Dataset):
 
     def __getitem__(self, index):
 
-        sample = torch.load(self.videos_stack[index])
+        # sample = torch.load(self.videos_stack[index])
+        with open(self.videos_stack[index], 'rb') as f:
+            sample = pickle.load(f)
         return sample.permute(1, 0, 2, 3), self.labels[index]
 
 
-syn_data = VideoDataset("../../../Data/RedHenLab/Color Films/EditedColorFilms/SyntheticDataset/",
-                        "../../../Data/RedHenLab/Color Films/EditedColorFilms/SyntheticDataset/annotations.csv",
+print("hi")
+syn_data = VideoDataset("../../../Data/deepSBD/EditedDeepSBD/",
+                        "../../../Data/deepSBD/EditedDeepSBD/annotations.csv",
                         64, 64)
+print("hi2")
 
-video_loader = DataLoader(syn_data, batch_size=8, shuffle=True)
+# test_data = VideoDataset("../../../Data/RAI/segments/",
+#                          "../../../Data/RAI/segments/annotations.csv",
+#                          64, 64)
 
-model = deep_SBD.Model()
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(device)
-#
 train_size = int(0.9 * len(syn_data))
 test_size = len(syn_data) - train_size
 
@@ -92,58 +94,17 @@ print("Training Size", train_size)
 print("Testing Size", test_size)
 
 train_dataset, test_dataset = torch.utils.data.random_split(syn_data, [train_size, test_size])
-# train_loader = DataLoader(train_dataset, batch_size=8, shuffle=True)
-# train.train_loop(model, train_dataset, test_dataset, 16, 10, device)
+test_loader = DataLoader(train_dataset, batch_size=1, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
 
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
-criterion = nn.CrossEntropyLoss()
-train_loader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=16, shuffle=True)
-# model = model.to(device)
+model = deep_SBD.Model()
+# model.load_state_dict(torch.load("model_final.pt"))
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+print(device)
+model = model.to(device)
+model.eval()
 
-train_losses = []
-test_losses = []
+normalize = torchvision.transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                             std=[0.229, 0.224, 0.225])
 
-train.train_loop(model, train_dataset, test_dataset, batch_size=8, num_epochs=10, device=device)
-
-
-# for epoch in range(10):
-#     model.train()
-#     train_epoch_losses = []
-#     test_epoch_losses = []
-#     for it, data in enumerate(tqdm(train_loader)):
-#         x, labels = data
-#         x = x.to(device)
-#         labels = labels.to(device)
-#
-#         # zero the parameter gradients
-#         optimizer.zero_grad()
-#
-#         # forward
-#         outputs = model(x)
-#         loss = criterion(outputs, labels)
-#         loss.backward()
-#         optimizer.step()
-#         print("Accuracy:", accuracy(outputs, labels))
-#         train_epoch_losses.append(loss.item())
-#
-#     with torch.no_grad():
-#         for test_it, data in enumerate(tqdm(test_loader)):
-#             test_x, test_labels = data
-#             test_x = test_x.to(device)
-#             test_labels = test_labels.to(device)
-#
-#             test_outputs = model(test_x)
-#             test_loss = criterion(test_outputs, test_labels)
-#             test_epoch_losses.append(test_loss.item())
-#
-#     train_losses.append(sum(train_epoch_losses)/len(train_epoch_losses))
-#     test_losses.append(sum(test_epoch_losses)/len(test_epoch_losses))
-#
-#     print(f"Epoch: {epoch+1} Train Loss: {train_losses[epoch]} Test Loss: {test_losses[epoch]}")
-#
-# plt.xlabel("Epoch")
-# plt.ylabel("Loss")
-# plt.plot(train_losses)
-# plt.plot(test_losses)
-# plt.show()
+train.train_loop(model, train_dataset, test_dataset, batch_size=8, num_epochs=5, device=device)
