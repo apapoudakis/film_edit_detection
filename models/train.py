@@ -6,7 +6,7 @@ import torch.nn as nn
 from utils import checkpoints
 
 
-def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
+def train_loop(model, train_data, test_data, batch_size, num_epochs, device, checkpoint=None):
 
     # optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
     optimizer = torch.optim.SGD(model.parameters(), lr=0.01, momentum=0.9)
@@ -15,13 +15,20 @@ def train_loop(model, train_data, test_data, batch_size, num_epochs, device):
     test_loader = DataLoader(test_data, batch_size=batch_size, shuffle=True)
     model = model.to(device)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+    start_epoch = 0
+
+    if checkpoint is not None:
+        model_state_dict, optimizer_state_dict, epoch, loss = checkpoints.load(checkpoint)
+        start_epoch = epoch
+        model.load_state_dict(model_state_dict)
+        optimizer.load_state_dict(optimizer_state_dict)
 
     train_losses = []
     test_losses = []
     train_accuracy = []
     test_accuracy = []
 
-    for epoch in range(num_epochs):
+    for epoch in range(start_epoch, num_epochs):
         model.train()
         train_epoch_losses = []
         test_epoch_losses = []
