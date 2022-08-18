@@ -38,4 +38,4 @@ def data_formatting(root_dir, annotation_path, width, height):
     df.to_csv(os.path.join(annotation_path, "annotations.csv"), mode="a", index=False, header=False)
 
 
-data_formatting("../../Data/DeepSBD/", "../../Data/deepSBD/EditedDeepSBD/", 112, 112)
+data_formatting("../../Data/DeepSBD/", "../../Data/DeepSBD/EditedDeepSBD/", 112, 112)
