@@ -10,3 +10,9 @@ torch
 torchvision
 tqdm
 wget
+Pillow
+torchaudio
+opencv-python
+PyMatting
+PyDrive2
+wavencoder
