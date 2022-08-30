@@ -15,4 +15,8 @@ def recall(num_correct, num_gt):
 
 
 def f1_score(precision, recall):
-    return 2*(precision*recall)/(precision+recall)
+    if precision+recall == 0:
+        eps = 1e-7
+    else:
+        eps = 0
+    return 2*(precision*recall)/(precision+recall+eps)

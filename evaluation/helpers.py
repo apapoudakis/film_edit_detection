@@ -1,23 +1,37 @@
+"""
+This repository https://github.com/Tangshitao/ClipShots/blob/master/tools/evaluate.py is used for
+Shot Boundary Detection evaluation.
+"""
+
 import os
 import re
 from ast import literal_eval
-from metrics import precision, recall, f1_score
 from models import deep_SBD
-import inference
+from evaluation import inference
 import utils
 import pandas as pd
 import torch
-from collections import Counter
-from operator import itemgetter
+from utils.video import array_to_video
 
 
 def check_overlap(begin1, end1, begin2, end2):
-    return max(0, min(end1, end2) - max(begin1, begin2)) > 0
+    if begin1 > begin2:
+        begin1, end1, begin2, end2 = begin2, end2, begin1, end1
+
+    return end1 >= begin2
 
 
-def segments_generator(frames, num_frames, overlap):
-    for i in range(0, len(frames) - num_frames, overlap):
-        yield frames[i:i + num_frames, :, :, :].permute(1, 0, 2, 3)
+def get_union_cnt(set1, set2):
+    cnt = 0
+    gt_cuts_bool = [True] * len(set2)
+    for begin, end in set1:
+        for idx, cut in enumerate(set2):
+            _begin, _end = cut
+            if check_overlap(begin, end, _begin, _end) and gt_cuts_bool[idx]:
+                cnt += 1
+                gt_cuts_bool[idx] = False
+                break
+    return cnt
 
 
 def gt_boundaries(gt_file):
@@ -48,62 +62,41 @@ def gt_boundaries(gt_file):
     return gt_cuts
 
 
+def recall_pre_f1(a, b, c):
+    recall = a / b if b != 0 else 0
+    precison = a / c if c != 0 else 0
+    f1 = 2 * recall * precison / (recall + precison)
+    return precison, recall, f1
+
+
 def evaluate_predictions(pred_file, gt_file):
+
     with open(pred_file) as f:
         pred_cuts = f.readlines()
     pred_cuts = [literal_eval(x.strip()) for x in pred_cuts]
 
     gt_cuts = gt_boundaries(gt_file)
-    print(pred_cuts)
-    print(gt_cuts)
 
-    num_preds = len(pred_cuts)
-    hard_preds = Counter(map(itemgetter(2), pred_cuts))[1]
-    gradual_preds = Counter(map(itemgetter(2), pred_cuts))[2]
+    _gt_cuts = [(begin, end) for begin, end, _ in gt_cuts]
+    gt_hard = [(begin, end) for begin, end, _ in gt_cuts if end - begin == 1]
+    gt_graduals = [(begin, end) for begin, end, _ in gt_cuts if end - begin > 1]
+    pred_hard = [(begin, end) for begin, end, label in pred_cuts if label == 1]
+    pred_graduals = [(begin, end) for begin, end, label in pred_cuts if label == 2]
 
-    total_gt_cuts = len(gt_cuts)
-    gt_hard_cuts = Counter(map(itemgetter(2), gt_cuts))[1]
-    gt_gradual_cuts = Counter(map(itemgetter(2), gt_cuts))[2]
+    hard_correct = get_union_cnt(gt_hard, pred_hard)
+    gradual_correct = get_union_cnt(gt_graduals, pred_graduals)
+    all_correct = get_union_cnt(_gt_cuts, pred_hard + pred_graduals)
 
-    correct_preds = 0
-    gradual_correct = 0
-    hard_correct = 0
+    prec, rec, f1 = recall_pre_f1(all_correct, len(gt_hard) + len(gt_graduals), len(pred_hard) + len(pred_graduals))
+    prec_hard, rec_hard, f1_hard = recall_pre_f1(hard_correct, len(gt_hard), len(pred_hard))
+    prec_gradual, rec_gradual, f1_gradual = recall_pre_f1(gradual_correct, len(gt_graduals), len(pred_graduals))
 
-    gt_cuts_bool = [True] * len(gt_cuts)
-
-    for begin1, end1, pred in pred_cuts:
-        for idx, ground_truth in enumerate(gt_cuts):
-            gt_begin2, gt_end2, label = ground_truth
-            if check_overlap(begin1, end1, gt_begin2, gt_end2) and pred == label and gt_cuts_bool[idx]:
-                correct_preds += 1
-                if label == 1:
-                    hard_correct += 1
-                elif label == 2:
-                    gradual_correct += 1
-                gt_cuts_bool[idx] = False
-                break
-
-    prec = precision(correct_preds, num_preds)
-    rec = recall(correct_preds, total_gt_cuts)
-    f1 = f1_score(prec, rec)
-
-    gradual_prec = precision(gradual_correct, gradual_preds)
-    gradual_rec = recall(gradual_correct, gt_gradual_cuts)
-    gradual_f1 = f1_score(gradual_prec, gradual_rec)
-
-    hard_prec = precision(hard_correct, hard_preds)
-    hard_rec = recall(hard_correct, gt_hard_cuts)
-    hard_f1 = f1_score(hard_prec, hard_rec)
-
-    print("Stats")
     print(f"Precision: {prec}, Recall: {rec}, F1-score: {f1}")
-    print(f"Correct Predictions: {correct_preds} Total Predictions: {num_preds} GT Cuts: {total_gt_cuts}")
-    print(f"Hard Cuts: Precision: {hard_prec}, Recall: {hard_rec}, F1-score: {hard_f1}")
-    print(f"Hard Correct Predictions: {hard_correct} Hard Predictions: {hard_preds} Hard GT Cuts: {gt_hard_cuts}")
-    print(f"Gradual Cuts: Precision: {gradual_prec}, Recall: {gradual_rec}, F1-score: {gradual_f1}")
-    print(f"Gradual Correct Predictions: {gradual_correct} Gradual Predictions: {gradual_preds} Gradual GT Cuts: {gt_gradual_cuts}")
-
-    print("\n")
+    print(f"Correct Predictions: {all_correct} Total Predictions: {len(pred_hard) + len(pred_graduals)} GT Cuts: {len(gt_hard) + len(gt_graduals)}")
+    print(f"Hard Cuts: Precision: {prec_hard}, Recall: {rec_hard}, F1-score: {f1_hard}")
+    print(f"Hard Correct Predictions: {hard_correct} Hard Predictions: {len(pred_hard)} Hard GT Cuts: {len(gt_hard)}")
+    print(f"Gradual Cuts: Precision: {prec_gradual}, Recall: {rec_gradual}, F1-score: {f1_gradual}")
+    print(f"Gradual Correct Predictions: {gradual_correct} Gradual Predictions: {len(pred_graduals)} Gradual GT Cuts: {len(gt_graduals)}")
 
     return prec, rec, f1
 
@@ -120,7 +113,7 @@ def test_videos_segment(videos_path, output_path, num_frames=16, overlap=8):
     for v in videos:
         frames = utils.video.get_frames(os.path.join(videos_path, v))
         annotations = gt_boundaries(os.path.join(videos_path, v.split(".mp4")[0] + "_gt.txt"))
-        segments_iterator = segments_generator(frames, num_frames, overlap)
+        segments_iterator = inference.segments_generator(frames, num_frames, overlap)
         print(annotations)
 
         for i, segment in enumerate(segments_iterator):
