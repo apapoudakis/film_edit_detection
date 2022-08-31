@@ -15,8 +15,8 @@ python3 audio_visual_synthesis.py [-h] video_path annotation_path output_path nu
 
 ### Generated Samples
 ![A test image](imgs/gradual.jpg)
-![A test image](imgs/f_in1.jpg)
-![A test image](imgs/sea_image.jpg)
+![A test image](imgs/f_in.jpg)
+![A test image](imgs/f_out.jpg)
 
 
 [//]: # (###)
