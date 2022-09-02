@@ -13,13 +13,15 @@ cd data/syn_data
 python3 audio_visual_synthesis.py [-h] video_path annotation_path output_path num_frames N
 ```
 
-### Generated Samples
-![A test image](imgs/gradual.jpg)
-![A test image](imgs/f_in.jpg)
-![A test image](imgs/f_out.jpg)
+### Examples of Generated Samples
+![A test image](imgs/abrupt.png)
+![A test image](imgs/gradual.png)
+![A test image](imgs/fade-in.png)
+![A test image](imgs/fade-out.png)
 
 ## Shot Boundary Detection
 
+Predict the transitions of a given video file and save the results on a json file.
  
 
 ```
