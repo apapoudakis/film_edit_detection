@@ -21,7 +21,7 @@ python3 audio_visual_synthesis.py [-h] video_path annotation_path output_path nu
 
 ## Shot Boundary Detection
 
-Predict the transitions of a given video file and save the results on a json file.
+Predict the transitions of a given video file using the deepSBD [1] network (based on the C3D [2]). The results are saved on a json file at the output path.
  
 
 ```
@@ -29,7 +29,6 @@ python3 main.py [-h] video_path output_path
 ```
 
 
-###
 
 
 [//]: # (### Trained SBD Model results)
@@ -43,44 +42,47 @@ python3 main.py [-h] video_path output_path
 [//]: # (| DeepSBD | 0.87 | 0.9 |)
 
 
-[//]: # (## Singularity Envorinment)
+## Singularity Envorinment
 
-[//]: # ()
-[//]: # (1. Connect to CWRU HPC)
 
-[//]: # (```)
+1. Connect to CWRU HPC
 
-[//]: # (ssh user@rider.case.edu)
+```
+ssh user@rider.case.edu
+```
 
-[//]: # (```)
 
-[//]: # ()
-[//]: # (2. Request GPU node)
+2. Request GPU node
 
-[//]: # (```)
+```
+srun -p gpu -C gpu2080 --gres=gpu:1 --pty bash
+```
 
-[//]: # (module load singularity)
 
-[//]: # (```)
+4. Load singularity module
 
-[//]: # ()
-[//]: # (4. Load singularity module)
+```
+module load singularity
+```
 
-[//]: # (```)
 
-[//]: # (module load singularity)
+5. Run Modules
 
-[//]: # (```)
-
-[//]: # ()
-[//]: # (5. Run Modules)
-
-[//]: # (```)
-
-[//]: # (singularity exec --nv first_version.sif python3 train_xor.py)
-
-[//]: # (```)
+```
+git clone https://github.com/apapoudakis/film_edit_detection.git
+singularity shell --nv sbd_img.sif 
+python3 main.py [video_path] [output_path]
+```
 
 [//]: # ()
 [//]: # (## References)
+## References
 
+[1] A. Hassanien, M. Elgharib, A. Selim, M. Hefeeda, and
+W. Matusik. Large-scale, fast and accurate shot boundary
+detection through spatio-temporal convolutional neural networks. 
+
+[2] D. Tran, L. Bourdev, R. Fergus, L. Torresani, and M. Paluri, Learning
+spatiotemporal features with 3d convolutional networks.
+
+###
