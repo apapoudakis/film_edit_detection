@@ -1,6 +1,5 @@
 # film_edit_detection
-Automatic film comprehension has recently gained increased attention due to the rapid development of the streaming services and the need to reduce manual processing of video content. During this project, we aspire to work upon the shot boundary detection problem which is of high importance for various other tasks such as movies retrieval, indexing and summarization. Our goal is to detect the transition between the consecutive shots and at the same time to identify the type of cut (e.g. gradual, abrupt). Compared to the majority of the existing works, we aim to work on historical films, with damaged or low-quality video data, which makes the cuts identification task particularly challenging. 
-
+Automatic film comprehension has recently gained increased attention due to the rapid development of the streaming services and the need to reduce manual processing of video content. During this project, we aspire to work upon the shot boundary detection problem which is of high importance for various other tasks such as movies retrieval, indexing and summarization. Our goal is to detect the transition between the consecutive shots and at the same time to identify the type of cut (e.g. gradual, abrupt). Compared to the majority of the existing works, we aim to work on historical films, with damaged or low-quality video data, which makes the cuts identification task particularly challenging.
 
 ## Synthetic Audio-Visual Dataset
 
@@ -52,9 +51,10 @@ ssh user@rider.case.edu
 ```
 
 
-2. Request GPU node
+2. Request a GPU node
 
 ```
+cd /mnt/rds/redhen/gallina/home/
 srun -p gpu -C gpu2080 --gres=gpu:1 --pty bash
 ```
 
@@ -69,13 +69,24 @@ module load singularity
 5. Run Modules
 
 ```
+cd /tmp/$USER/
 git clone https://github.com/apapoudakis/film_edit_detection.git
+cd film_edit_detection
+rsync -az hpc3:/mnt/rds/redhen/gallina/home/axp1083/safe/singularity/sbd_img.sif /tmp/axp1083/film_edit_detection/
 singularity shell --nv sbd_img.sif 
 python3 main.py [video_path] [output_path]
 ```
 
 [//]: # ()
 [//]: # (## References)
+
+
+###
+## Future Work
+- Audio-Visual Network (ResNet50 and PSD) [3]
+
+
+
 ## References
 
 [1] A. Hassanien, M. Elgharib, A. Selim, M. Hefeeda, and
@@ -85,4 +96,4 @@ detection through spatio-temporal convolutional neural networks.
 [2] D. Tran, L. Bourdev, R. Fergus, L. Torresani, and M. Paluri, Learning
 spatiotemporal features with 3d convolutional networks.
 
-###
+[3] Bouyahi Mohamed and Yassine Ben Ayed. Multimodal features for shots boundary detection. 
