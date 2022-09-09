@@ -20,8 +20,7 @@ python3 audio_visual_synthesis.py [-h] video_path annotation_path output_path nu
 
 ## Shot Boundary Detection
 
-Predict the transitions of a given video file using the deepSBD [1] network (based on the C3D [2]). The results are saved on a json file at the output path.
- 
+Predict the transitions of a given video file using the deepSBD [1] network (based on the C3D [2]). Model checkpoints can be found [here](https://drive.google.com/file/d/1Rd7ij3o9pD0UpAQdfLJIkFVeoOdC1n3Y/view?usp=sharing).The results are saved on a json file at the output path.
 
 ```
 python3 main.py [-h] video_path output_path
@@ -97,3 +96,5 @@ detection through spatio-temporal convolutional neural networks.
 spatiotemporal features with 3d convolutional networks.
 
 [3] Bouyahi Mohamed and Yassine Ben Ayed. Multimodal features for shots boundary detection. 
+
+[4] Shitao Tang and Litong Feng and Zhanghui Kuang and Yimin Chen and Wayne Zhang. Fast Video Shot Transition Localization with Deep Structured Models.
