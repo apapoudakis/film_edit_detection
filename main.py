@@ -2,6 +2,9 @@ import argparse
 from evaluation.inference import run
 from models import deep_SBD
 import torch
+import json
+import os
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -24,3 +27,6 @@ if __name__ == "__main__":
     pred_graduals = [(begin, end) for begin, end, label in preds if label == 2]
 
     results = {"Hard": pred_hard, "Gradual": pred_graduals}
+
+    with open(os.path.join(args.output_path, 'results.json'), 'w') as fp:
+        json.dump(results, fp)
